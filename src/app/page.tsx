@@ -1,103 +1,148 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState, useCallback } from "react";
+import { SearchBar } from "@/components/SearchBar";
+import { PersonCard } from "@/components/PersonCard";
+import { PersonDetailPanel } from "@/components/PersonDetailPanel";
+import { PersonWithSpouseHint } from "@/types";
+import { Plus, Users, UserPlus } from "lucide-react";
+
+export default function SearchPage() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<PersonWithSpouseHint[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Panel state
+  const [activePersonId, setActivePersonId] = useState<string | null>(null);
+  const [panelMode, setPanelMode] = useState<"view" | "create">("view");
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+
+  const fetchPeople = useCallback(async (q: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/people?q=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setResults(data);
+      }
+    } catch (err) {
+      console.error("Failed to load people:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchPeople(query);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query, fetchPeople]);
+
+  const handleOpenPerson = (id: string) => {
+    setActivePersonId(id);
+    setPanelMode("view");
+    setIsPanelOpen(true);
+  };
+
+  const handleCreateNew = () => {
+    setActivePersonId(null);
+    setPanelMode("create");
+    setIsPanelOpen(true);
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8 pb-24">
+      {/* Page Title & Search Header */}
+      <div className="mb-6 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold font-heading text-textPrimary">
+              Family Directory
+            </h1>
+            <p className="text-xs sm:text-sm font-body text-textSecondary mt-0.5">
+              Search relatives by name, phone number, native town, or current city
+            </p>
+          </div>
+          <button
+            onClick={handleCreateNew}
+            className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-card bg-primary hover:bg-primary/90 text-white font-medium font-body text-sm shadow-sm transition-colors cursor-pointer"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <Plus className="w-4 h-4" />
+            <span>Add Person</span>
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder="Search by name, phone number, place..."
+          isLoading={loading}
+        />
+      </div>
+
+      {/* Results Section */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-semibold uppercase tracking-wider text-textSecondary">
+            {query.trim() ? "Search Results" : "All Members"} ({results.length})
+          </span>
+        </div>
+
+        {results.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {results.map((person) => (
+              <PersonCard
+                key={person.id}
+                person={person}
+                onClick={() => handleOpenPerson(person.id)}
+              />
+            ))}
+          </div>
+        ) : !loading ? (
+          <div className="text-center py-16 px-4 bg-surface rounded-card border border-dashed border-border">
+            <div className="w-12 h-12 rounded-full bg-bg flex items-center justify-center text-textSecondary mx-auto mb-3">
+              <Users className="w-6 h-6" />
+            </div>
+            <h3 className="font-heading font-semibold text-textPrimary text-sm mb-1">
+              No family members found
+            </h3>
+            <p className="font-body text-xs text-textSecondary max-w-sm mx-auto mb-4">
+              {query.trim()
+                ? `No relatives matched "${query}". Check spelling or add a new entry.`
+                : "Your family tree is currently empty. Start by adding your first family member!"}
+            </p>
+            <button
+              onClick={handleCreateNew}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-card bg-primary text-white text-xs font-medium hover:bg-primary/90 transition-colors cursor-pointer"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Add First Person</span>
+            </button>
+          </div>
+        ) : null}
+      </section>
+
+      {/* Floating "+ Add Person" button (bottom-right, bg-primary) */}
+      <button
+        onClick={handleCreateNew}
+        className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-30 flex items-center gap-2 px-4 py-3.5 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl hover:shadow-2xl transition-all cursor-pointer font-medium text-sm group"
+        title="Add Person"
+      >
+        <Plus className="w-5 h-5 transition-transform group-hover:rotate-90" />
+        <span className="font-heading font-semibold pr-1">Add Person</span>
+      </button>
+
+      {/* Slide-over panel */}
+      {isPanelOpen && (
+        <PersonDetailPanel
+          personId={activePersonId}
+          initialMode={panelMode}
+          onClose={() => setIsPanelOpen(false)}
+          onPersonUpdated={() => fetchPeople(query)}
+        />
+      )}
+    </main>
   );
 }

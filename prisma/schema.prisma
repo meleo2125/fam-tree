@@ -1,0 +1,62 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum RelationshipType {
+  PARENT_CHILD
+  SPOUSE
+}
+
+enum MarriageStatus {
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+model Person {
+  id           String    @id @default(cuid())
+  name         String
+  gender       Gender?
+  dob          DateTime?
+  dobPrecision String?   // "full" | "year" | "unknown"
+  phone        String?
+  email        String?
+  currentPlace String?
+  nativePlace  String?
+  occupation   String?
+  bloodGroup   String?
+  deceased     Boolean   @default(false)
+  deathDate    DateTime?
+  notes        String?
+  photoUrl     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  relationshipsAsA Relationship[] @relation("PersonA")
+  relationshipsAsB Relationship[] @relation("PersonB")
+}
+
+model Relationship {
+  id           String           @id @default(cuid())
+  type         RelationshipType
+  personAId    String
+  personA      Person           @relation("PersonA", fields: [personAId], references: [id], onDelete: Cascade)
+  personBId    String
+  personB      Person           @relation("PersonB", fields: [personBId], references: [id], onDelete: Cascade)
+  marriageDate DateTime?
+  status       MarriageStatus?
+  createdAt    DateTime         @default(now())
+
+  @@unique([type, personAId, personBId])
+}
